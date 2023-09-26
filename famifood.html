@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>全家友善時光</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+    <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+</head>
+<body>
+
+    <div class="alert alert-warning" role="alert">
+        <dl class="row">
+          <dt class="col-2">更新時間</dt>
+          <dd class="col-5" id="update_time"></dd>
+          <dd class="col-3"><button id="filter_rice" type="button" class="btn btn-primary">健康餐</button></dd>
+        </dl>
+    </div>
+<!--    <div class="table-responsive">-->
+
+<!--        <table class="table">-->
+<!--            <thead>-->
+<!--                <tr>-->
+<!--                    <th scope="col">Store</th>-->
+<!--                    <th scope="col">Products</th>-->
+<!--                </tr>-->
+<!--            </thead>-->
+<!--            <tbody id="table_body">-->
+
+<!--            </tbody>-->
+<!--        </table>-->
+<!--    </div>-->
+
+    <div class="row">
+        <div id="food-table"></div>
+    </div>
+
+<script>
+    var myHeaders = new Headers();
+    // myHeaders.append("authority", "stamp.family.com.tw");
+    myHeaders.append("accept", "application/json, text/plain, */*");
+    myHeaders.append("accept-language", "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7");
+    // myHeaders.append("authorization", "Bearer undefined");
+    myHeaders.append("content-type", "application/json;charset=UTF-8");
+    myHeaders.append("dnt", "1");
+    // myHeaders.append("origin", "https://foodmap.family.com.tw");
+    // myHeaders.append("referer", "https://foodmap.family.com.tw/");
+    myHeaders.append("sec-ch-ua", "\"Chromium\";v=\"112\", \"Microsoft Edge\";v=\"112\", \"Not:A-Brand\";v=\"99\"");
+    myHeaders.append("sec-ch-ua-mobile", "?0");
+    myHeaders.append("sec-ch-ua-platform", "\"macOS\"");
+    myHeaders.append("sec-fetch-dest", "empty");
+    myHeaders.append("sec-fetch-mode", "cors");
+    myHeaders.append("sec-fetch-site", "same-site");
+    myHeaders.append("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.46");
+    // myHeaders.append("Cookie", "AWSALB=K3qrlwHZly/BnEOoAGpFUTWppnXMctk/tA60ERfoiVxBgBi7wuj1GLdlawQZbVTVPVjdm9LpDs37aKg1BL/hsL2EctgWfpZ/t/fa93Cdw/jEwOMB+eUnxL9c0MVY; AWSALBCORS=K3qrlwHZly/BnEOoAGpFUTWppnXMctk/tA60ERfoiVxBgBi7wuj1GLdlawQZbVTVPVjdm9LpDs37aKg1BL/hsL2EctgWfpZ/t/fa93Cdw/jEwOMB+eUnxL9c0MVY; CookieKey=CookieValue");
+     /*
+        飯類主食
+        麵類主食
+        飯糰手卷
+        湯品小吃
+        三明治沙拉
+        麵包甜點
+        吐司蛋糕
+        蔬果
+        */
+
+    var table = new Tabulator("#food-table", {
+        layout: "fitDataFill",
+        columns:[
+            {title:"店名", field:"store_name", sorter:"string", formatter:"link",
+                formatterParams: {
+                    labelField: "store_name",
+                    urlPrefix: "https://maps.google.com/?q=",
+                    urlField: "latlng",
+                    target: "_blank"
+                },
+            },
+            // {title:"", field:"age", sorter:"number", hozAlign:"right", formatter:"progress"},
+            {title:"飯類主食", field:"飯類主食", sorter:"string", formatter:"html"},
+            {title:"麵類主食", field:"麵類主食", sorter:"string", formatter:"html"},
+            {title:"飯糰手卷", field:"飯糰手卷", sorter:"string", formatter:"html"},
+            {title:"湯品小吃", field:"湯品小吃", sorter:"string", formatter:"html"},
+            {title:"三明治沙拉", field:"三明治沙拉", sorter:"string", formatter:"html"},
+            {title:"麵包甜點", field:"麵包甜點", sorter:"string", formatter:"html"},
+            {title:"吐司蛋糕", field:"吐司蛋糕", sorter:"string", formatter:"html"},
+            {title:"蔬果", field:"蔬果", sorter:"string", formatter:"html"},
+        ],
+    });
+    // table.setData(tableData);
+    var has_filter = false;
+    const handleClick = (event) => {
+      // console.log(event);
+        if (has_filter) {
+            table.clearFilter();
+        } else {
+            table.setFilter("飯類主食", "keywords", "健身 烤蛋白");
+        }
+        has_filter = !has_filter;
+    };
+    document.getElementById("filter_rice")?.addEventListener("click", handleClick);
+
+    post_codes = ['110', '115'];
+
+    for (var post_code of post_codes) {
+        var raw = {
+            'ProjectCode': '202106302',
+            'OldPKeys': [],
+            'PostInfo': post_code,
+            'Latitude': 0,
+            'Longitude': 0
+        };
+
+        var requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: JSON.stringify(raw),
+            redirect: 'follow'
+        };
+
+        fetch("https://stamp.family.com.tw/api/maps/MapProductInfo", requestOptions)
+            .then(response => response.json())
+            .then(function (result) {
+                var tableData = [];
+
+                var data = result['data']
+                // console.log(data)
+                var updated_at = '';
+                for (var store of data) {
+                    console.log(store)
+                    store_name = store['name']
+                    address = store['address']
+                    updated_at = store['updateDate'].slice(0, 19)
+                    lat = store['latitude']
+                    lng = store['longitude']
+                    categories = store['info']
+                    // console.log(store_name, address, updated_at, lat, lng)
+                    var row = {
+                        "store_name": store_name,
+                        "address": address,
+                        "latlng": `${lat},${lng}`
+                    }
+
+                    product_rows = []
+                    for (var category of categories) {
+                        category_name = category['name']
+                        items = []
+                        for (var sub_categ of category['categories']) {
+
+                            for (var product of sub_categ['products']) {
+                                name = product['name']
+                                quantity = product['qty']
+                                if (name.includes("健身") || name.includes("烤蛋白")) {
+                                    item_html = `<span class="badge bg-primary">${quantity}</span> <b class="text-danger">${name}</b>`
+                                } else {
+                                    item_html = `<span class="badge bg-primary">${quantity}</span> ${name}`
+                                }
+
+                                items.push(item_html)
+
+                                product_rows.push([name, quantity])
+                            }
+                        }
+                        if (items.length > 0) {
+                            row[category_name] = items.join('<br/>')
+                        }
+                    }
+                    if (Object.keys(row).length > 3) {
+                        tableData.push(row);
+                    }
+                    /* console.log(product_rows)
+                    if (product_rows.length > 0) {
+                        var content = `
+                                <tr>
+                                    <td><h5><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">${store_name}</a></h5>
+                                        <p class="text-success">${address}</p>
+                                    </td>
+                                    <td>
+                        `
+                        for (var row of product_rows) {
+                            content += `<span class="badge bg-primary">${row[1]}</span> ${row[0]}<br>`
+                        }
+                        content += `
+                                    </td>
+                                </tr>
+                            `
+                        // console.log(content)
+                        // document.getElementById("table_body").innerHTML += content
+                    }
+                    */
+                }
+                document.getElementById("update_time").innerHTML = updated_at
+
+                console.log(tableData)
+                table.addData(tableData)
+            })
+            .catch(error => console.log('error', error));
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+</body>
+</html>
