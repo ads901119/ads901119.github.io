@@ -14,7 +14,10 @@
         <dl class="row">
           <dt class="col-2">更新時間</dt>
           <dd class="col-5" id="update_time"></dd>
-          <dd class="col-3"><button id="filter_rice" type="button" class="btn btn-primary">健康餐</button></dd>
+          <dd class="col-3">
+              <button id="filter_rice" type="button" class="btn btn-outline-primary">健康餐</button>
+              <button id="filter_xinyi" type="button" class="btn btn-outline-success">信義區</button>
+          </dd>
         </dl>
     </div>
 <!--    <div class="table-responsive">-->
@@ -67,42 +70,65 @@
 
     var table = new Tabulator("#food-table", {
         layout: "fitDataFill",
+        // layout: "fitColumns",
         columns:[
-            {title:"店名", field:"store_name", sorter:"string", formatter:"link",
-                formatterParams: {
-                    labelField: "store_name",
-                    urlPrefix: "https://maps.google.com/?q=",
-                    urlField: "latlng",
-                    target: "_blank"
-                },
-            },
+            // {title:"店名", field:"store_name", sorter:"string", formatter:"link",
+            //     formatterParams: {
+            //         labelField: "store_name",
+            //         urlPrefix: "https://maps.google.com/?q=",
+            //         urlField: "latlng",
+            //         target: "_blank"
+            //     },
+            // },
+            {title:"店名", field:"store_name", formatter: "html", width:160, responsive:0},
             // {title:"", field:"age", sorter:"number", hozAlign:"right", formatter:"progress"},
-            {title:"飯類主食", field:"飯類主食", sorter:"string", formatter:"html"},
-            {title:"麵類主食", field:"麵類主食", sorter:"string", formatter:"html"},
-            {title:"飯糰手卷", field:"飯糰手卷", sorter:"string", formatter:"html"},
-            {title:"湯品小吃", field:"湯品小吃", sorter:"string", formatter:"html"},
-            {title:"三明治沙拉", field:"三明治沙拉", sorter:"string", formatter:"html"},
-            {title:"麵包甜點", field:"麵包甜點", sorter:"string", formatter:"html"},
-            {title:"吐司蛋糕", field:"吐司蛋糕", sorter:"string", formatter:"html"},
-            {title:"蔬果", field:"蔬果", sorter:"string", formatter:"html"},
+            {title:"飯類主食", field:"飯類主食", formatter:"html"},
+            {title:"麵類主食", field:"麵類主食", formatter:"html"},
+            {title:"飯糰手卷", field:"飯糰手卷", formatter:"html"},
+            {title:"湯品小吃", field:"湯品小吃", formatter:"html"},
+            {title:"三明治沙拉", field:"三明治沙拉", formatter:"html"},
+            {title:"麵包甜點", field:"麵包甜點", formatter:"html"},
+            {title:"吐司蛋糕", field:"吐司蛋糕", formatter:"html"},
+            {title:"蔬果", field:"蔬果", formatter:"html"},
+            {title:"郵遞區號", field:"post_code", sorter:"string", visible:false},
+            // {title:"is_healthy", field:"is_healthy", sorter:"boolean", visible:false},
         ],
     });
     // table.setData(tableData);
-    var has_filter = false;
-    const handleClick = (event) => {
-      // console.log(event);
-        if (has_filter) {
-            table.clearFilter();
+    var has_healthy_filter = false;
+    var has_xinyi_filter = false;
+    const handleHealthyFilter = (event) => {
+        console.log(event);
+        if (has_healthy_filter) {
+            // table.clearFilter();
+            table.removeFilter("飯類主食", "keywords", "健身 烤蛋白");
+            event.target.classList.remove('active');
         } else {
-            table.setFilter("飯類主食", "keywords", "健身 烤蛋白");
+            table.addFilter("飯類主食", "keywords", "健身 烤蛋白");
+            event.target.classList.add('active');
+            // table.setFilter("is_healthy", "=", 1);
         }
-        has_filter = !has_filter;
+        has_healthy_filter = !has_healthy_filter;
     };
-    document.getElementById("filter_rice")?.addEventListener("click", handleClick);
+    const handleXinyiFilter = (event) => {
+        console.log(event);
+        if (has_xinyi_filter) {
+            // table.clearFilter();
+            table.removeFilter("post_code", "=", "110");
+            event.target.classList.remove('active');
+        } else {
+            table.addFilter("post_code", "=", "110");
+            event.target.classList.add('active');
+
+            // table.setFilter("is_healthy", "=", 1);
+        }
+        has_xinyi_filter = !has_xinyi_filter;
+    };
+    document.getElementById("filter_rice")?.addEventListener("click", handleHealthyFilter);
+    document.getElementById("filter_xinyi")?.addEventListener("click", handleXinyiFilter);
 
     post_codes = ['110', '115'];
-
-    for (var post_code of post_codes) {
+    for (const post_code of post_codes) {
         var raw = {
             'ProjectCode': '202106302',
             'OldPKeys': [],
@@ -136,11 +162,12 @@
                     categories = store['info']
                     // console.log(store_name, address, updated_at, lat, lng)
                     var row = {
-                        "store_name": store_name,
+                        "store_name": `<h6><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">${store_name}</a></h6><p class="text-wrap">${address}</p>`,
                         "address": address,
-                        "latlng": `${lat},${lng}`
+                        "latlng": `${lat},${lng}`,
+                        "post_code": post_code,
                     }
-
+                    // is_healthy = 0;
                     product_rows = []
                     for (var category of categories) {
                         category_name = category['name']
@@ -152,6 +179,7 @@
                                 quantity = product['qty']
                                 if (name.includes("健身") || name.includes("烤蛋白")) {
                                     item_html = `<span class="badge bg-primary">${quantity}</span> <b class="text-danger">${name}</b>`
+                                    // is_healthy = 1
                                 } else {
                                     item_html = `<span class="badge bg-primary">${quantity}</span> ${name}`
                                 }
@@ -165,6 +193,8 @@
                             row[category_name] = items.join('<br/>')
                         }
                     }
+                    // row[is_healthy] = is_healthy
+
                     if (Object.keys(row).length > 3) {
                         tableData.push(row);
                     }
@@ -193,6 +223,7 @@
 
                 console.log(tableData)
                 table.addData(tableData)
+                table.setSort("post_code", "asc")
             })
             .catch(error => console.log('error', error));
     }
