@@ -20,24 +20,11 @@
           </dd>
         </dl>
     </div>
-<!--    <div class="table-responsive">-->
-
-<!--        <table class="table">-->
-<!--            <thead>-->
-<!--                <tr>-->
-<!--                    <th scope="col">Store</th>-->
-<!--                    <th scope="col">Products</th>-->
-<!--                </tr>-->
-<!--            </thead>-->
-<!--            <tbody id="table_body">-->
-
-<!--            </tbody>-->
-<!--        </table>-->
-<!--    </div>-->
 
     <div class="row">
         <div id="food-table"></div>
     </div>
+
 
 <script>
     var myHeaders = new Headers();
@@ -98,7 +85,7 @@
     var has_healthy_filter = false;
     var has_xinyi_filter = false;
     const handleHealthyFilter = (event) => {
-        console.log(event);
+        // console.log(event);
         if (has_healthy_filter) {
             // table.clearFilter();
             table.removeFilter("飯類主食", "keywords", "健身 烤蛋白");
@@ -111,7 +98,7 @@
         has_healthy_filter = !has_healthy_filter;
     };
     const handleXinyiFilter = (event) => {
-        console.log(event);
+        // console.log(event);
         if (has_xinyi_filter) {
             // table.clearFilter();
             table.removeFilter("post_code", "=", "110");
@@ -153,7 +140,7 @@
                 // console.log(data)
                 var updated_at = '';
                 for (var store of data) {
-                    console.log(store)
+                    // console.log(store)
                     store_name = store['name']
                     address = store['address']
                     updated_at = store['updateDate'].slice(0, 19)
@@ -221,7 +208,7 @@
                 }
                 document.getElementById("update_time").innerHTML = updated_at
 
-                console.log(tableData)
+                // console.log(tableData)
                 table.addData(tableData)
                 table.setSort("post_code", "asc")
             })
