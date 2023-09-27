@@ -13,7 +13,7 @@
     <div class="alert alert-warning" role="alert">
         <dl class="row">
           <dt class="col-2">更新時間</dt>
-          <dd class="col-5" id="update_time"></dd>
+          <dd class="col-4" id="update_time"></dd>
           <dd class="col-3">
               <button id="filter_rice" type="button" class="btn btn-outline-primary">健康餐</button>
               <button id="filter_xinyi" type="button" class="btn btn-outline-success">信義區</button>
@@ -78,6 +78,7 @@
             {title:"吐司蛋糕", field:"吐司蛋糕", formatter:"html"},
             {title:"蔬果", field:"蔬果", formatter:"html"},
             {title:"郵遞區號", field:"post_code", sorter:"string", visible:false},
+            {title:"distance", field:"distance", sorter:"number", visible:false},
             // {title:"is_healthy", field:"is_healthy", sorter:"boolean", visible:false},
         ],
     });
@@ -120,8 +121,8 @@
             'ProjectCode': '202106302',
             'OldPKeys': [],
             'PostInfo': post_code,
-            'Latitude': 0,
-            'Longitude': 0
+            'Latitude': 25.040041,
+            'Longitude': 121.579240
         };
 
         var requestOptions = {
@@ -146,6 +147,7 @@
                     updated_at = store['updateDate'].slice(0, 19)
                     lat = store['latitude']
                     lng = store['longitude']
+                    distance = store['distance']
                     categories = store['info']
                     // console.log(store_name, address, updated_at, lat, lng)
                     var row = {
@@ -153,9 +155,9 @@
                         "address": address,
                         "latlng": `${lat},${lng}`,
                         "post_code": post_code,
+                        "distance": distance,
                     }
                     // is_healthy = 0;
-                    product_rows = []
                     for (var category of categories) {
                         category_name = category['name']
                         items = []
@@ -172,8 +174,6 @@
                                 }
 
                                 items.push(item_html)
-
-                                product_rows.push([name, quantity])
                             }
                         }
                         if (items.length > 0) {
@@ -185,32 +185,11 @@
                     if (Object.keys(row).length > 3) {
                         tableData.push(row);
                     }
-                    /* console.log(product_rows)
-                    if (product_rows.length > 0) {
-                        var content = `
-                                <tr>
-                                    <td><h5><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank">${store_name}</a></h5>
-                                        <p class="text-success">${address}</p>
-                                    </td>
-                                    <td>
-                        `
-                        for (var row of product_rows) {
-                            content += `<span class="badge bg-primary">${row[1]}</span> ${row[0]}<br>`
-                        }
-                        content += `
-                                    </td>
-                                </tr>
-                            `
-                        // console.log(content)
-                        // document.getElementById("table_body").innerHTML += content
-                    }
-                    */
                 }
                 document.getElementById("update_time").innerHTML = updated_at
 
-                // console.log(tableData)
                 table.addData(tableData)
-                table.setSort("post_code", "asc")
+                table.setSort("distance", "asc")
             })
             .catch(error => console.log('error', error));
     }
