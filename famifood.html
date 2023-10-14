@@ -11,14 +11,23 @@
 <body>
 
     <div class="alert alert-warning" role="alert">
-        <dl class="row">
-          <dt class="col-2">更新時間</dt>
-          <dd class="col-4" id="update_time"></dd>
-          <dd class="col-3">
-              <button id="filter_rice" type="button" class="btn btn-outline-primary">健康餐</button>
-              <button id="filter_xinyi" type="button" class="btn btn-outline-success">信義區</button>
-          </dd>
-        </dl>
+        <form class="row row-cols-lg-auto g-3 align-items-center">
+            <div class="col-auto">
+                <div id="update_time"></div>
+            </div>
+            <div class="col-auto">
+                <button id="filter_rice" type="button" class="btn btn-outline-primary">健康餐</button>
+                <button id="filter_xinyi" type="button" class="btn btn-outline-success">信義區</button>
+            </div>
+            <div class="col-2">
+                <div>郵遞區號</div>
+                <label class="visually-hidden" for="input_postcode" ></label>
+                <input type="number" class="form-control form-control-sm" id="input_postcode">
+            </div>
+            <div class="col-auto">
+                <button id="submit_postcode" type="button" class="btn btn-primary">送出</button>
+            </div>
+          </form>
     </div>
 
     <div class="row">
@@ -112,19 +121,59 @@
         }
         has_xinyi_filter = !has_xinyi_filter;
     };
+    const handlePostCode = (event) => {
+        const post_code = document.getElementById("input_postcode").value;
+        getFamiFood(post_code, undefined);
+    };
     document.getElementById("filter_rice")?.addEventListener("click", handleHealthyFilter);
     document.getElementById("filter_xinyi")?.addEventListener("click", handleXinyiFilter);
+    document.getElementById("submit_postcode")?.addEventListener("click", handlePostCode);
+    // document.getElementById("filter_xinyi")?.addEventListener("click", handleXinyiFilter);
 
-    post_codes = ['110', '115'];
-    for (const post_code of post_codes) {
+    if ("geolocation" in navigator) {
+      // Prompt user for permission to access their location
+      navigator.geolocation.getCurrentPosition(
+        // Success callback function
+        (position) => {
+          // Get the user's latitude and longitude coordinates
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          // Do something with the location data, e.g. display on a map
+          console.log(`Latitude: ${lat}, longitude: ${lng}`);
+          getFamiFood(undefined, [lat, lng]);
+        },
+        // Error callback function
+        (error) => {
+          // Handle errors, e.g. user denied location sharing permissions
+          console.error("Error getting user location:", error);
+          getFamiFood("110", undefined);
+        }
+      );
+    } else {
+      // Geolocation is not supported by the browser
+      console.error("Geolocation is not supported by this browser.");
+    }
+
+    function getFamiFood(post_code, latlng) {
         var raw = {
             'ProjectCode': '202106302',
             'OldPKeys': [],
-            'PostInfo': post_code,
-            'Latitude': 25.040041,
-            'Longitude': 121.579240
+            // 'PostInfo': post_code,
+            // 'Latitude': 25.040041,
+            // 'Longitude': 121.579240
+            'Latitude': 25.049818,
+            'Longitude': 121.572400
         };
+        if (latlng !== undefined) {
+            raw['Latitude'] = latlng[0];
+            raw['Longitude'] = latlng[1];
+        }
+        if (post_code !== undefined) {
+            raw['PostInfo'] = post_code;
 
+        }
+        console.log(raw);
         var requestOptions = {
             method: 'POST',
             headers: myHeaders,
@@ -135,6 +184,7 @@
         fetch("https://stamp.family.com.tw/api/maps/MapProductInfo", requestOptions)
             .then(response => response.json())
             .then(function (result) {
+                console.log(result)
                 var tableData = [];
 
                 var data = result['data']
@@ -144,7 +194,7 @@
                     // console.log(store)
                     store_name = store['name']
                     address = store['address']
-                    updated_at = store['updateDate'].slice(0, 19)
+                    updated_at = store['updateDate'].slice(5, 16).replace('T', ' ').replace('-', '/')
                     lat = store['latitude']
                     lng = store['longitude']
                     distance = store['distance']
@@ -188,7 +238,8 @@
                 }
                 document.getElementById("update_time").innerHTML = updated_at
 
-                table.addData(tableData)
+                // table.addData(tableData)
+                table.replaceData(tableData)
                 table.setSort("distance", "asc")
             })
             .catch(error => console.log('error', error));
